@@ -1,31 +1,54 @@
-import React from 'react';
-import ConnectedTodos from './Todos'
-import ConnectedGoals from './Goals'
+import React, { Component, Fragment } from 'react'
 import {connect} from 'react-redux'
-import {
-  handleInitialData
-} from '../actions/shared'
+import {BrowserRouter as Router, Route} from 'react-router-dom'
+import LoadingBar from 'react-redux-loading'
 
-class App extends React.Component {
-  componentDidMount () {
-    const {dispatch} = this.props // comes in as prop from ConnectedApp
+import Dashboard from './Dashboard';
+import Header from './Header';
+import QuestionInteractive from './QuestionInteractive'
+import NewQuestion from './NewQuestion'
+import Leaderboard from './Leaderboard';
+import Login from './Login';
+import {handleInitialData} from '../actions/shared'
 
-    dispatch(handleInitialData())
+class App extends Component {
+  componentDidMount() {
+    this.props.dispatch(handleInitialData())
   }
-  render () {
-    if (this.props.loading) {
-      return <h3>Loading</h3>
-    }
 
+  render() {
+    const {loading, authedUser} = this.props
     return (
-      <div>
-        <ConnectedTodos />
-        <ConnectedGoals />
-      </div>
+      <Router>
+        <Fragment>
+          <LoadingBar />
+          <div className='container'>
+            {(loading === false && authedUser!=='')
+              ? <div>
+                <Header />
+                <Route path='/' exact component={Dashboard} />
+                <Route path='/question/:id' component={QuestionInteractive} />
+                <Route path='/new' component={NewQuestion} />
+                <Route path='/leaderboard' component={Leaderboard} />
+              </div>
+              : null}
+            {(loading === false && authedUser==='')
+              ? <div>
+                <Login />
+              </div>
+              : null}
+          </div>
+        </Fragment>
+      </Router>
     )
   }
 }
 
-export default connect((state) => ({ // state ~ store
-  loading: state.loading
-}))(App)
+function mapStateToProps ({authedUser}) {
+  return {
+    loading: authedUser === null,
+    authedUser
+  }
+}
+
+export default connect(mapStateToProps)(App);

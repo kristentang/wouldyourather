@@ -1,11 +1,11 @@
 import {combineReducers} from 'redux'
+import {loadingBarReducer} from 'react-redux-loading'
 
-import todos from './todos'
-import goals from './goals'
-import loading from './loading'
+// import reducers
+import authedUser from './authUser'
+import users from './users'
+import questions from './questions'
 
 export default combineReducers({
-  todos,
-  loading,
-  goals
+  authedUser, users, questions, loadingBar: loadingBarReducer
 })

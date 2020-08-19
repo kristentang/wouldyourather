@@ -1,24 +1,57 @@
-import API from 'goals-todos-api'
+import {getInitialData, saveQuestion, saveQuestionAnswer} from '../utils/api'
 
-export const RECEIVE_DATA = "RECEIVE_DATA"
+// import action creators
+import {receiveUsers, answerQuestionUser, createQuestionUser} from '../actions/users'
+import {receiveQuestions, answerQuestion, createQuestion} from '../actions/questions'
+import {setAuthedUser} from '../actions/authUser'
+import {showLoading, hideLoading} from 'react-redux-loading'
 
-function receiveData (todos, goals) {
-  return {
-    type: RECEIVE_DATA,
-    todos,
-    goals
+const AUTHED_ID = '' // hard coded authed_id, default value
+
+export function handleInitialData() {
+  return (dispatch) => { // thunk pattern
+    dispatch(showLoading())
+    return getInitialData() // returns promise with object containing users + questions properties
+      .then(({users, questions}) => {
+        dispatch(receiveUsers(users))
+        dispatch(receiveQuestions(questions))
+        dispatch(setAuthedUser(AUTHED_ID))
+        dispatch(hideLoading())
+      })
   }
 }
 
-export function handleInitialData() {
-  return (dispatch) => {
-    return Promise.all([ // waits until all Promises have resolved before displaying asynchronous requests
-      API.fetchTodos(), // returns a Promise() object
-      API.fetchGoals()
-    ]).then(([todos, goals]) => {
-      console.log(todos, goals);
-      dispatch(receiveData(todos, goals))
-    })
+export function handleCreateQuestion (info) {
+  return (dispatch, getState) => {
+    const {authedUser} = getState()
+    dispatch(showLoading())
+    return saveQuestion(info)
+      .then((result) => {
+        dispatch(createQuestion(result))
+        dispatch(createQuestionUser(result))
+        dispatch(hideLoading())
+      })
+      .catch((e) => {
+        alert('There was an error saving the question. Try again.')
+        dispatch(hideLoading())
+      })
+  }
+}
 
+export function handleAnswerQuestion (info) {
+  return (dispatch) => {
+    dispatch(showLoading())
+    return saveQuestionAnswer(info)
+      .catch((e) => {
+        dispatch(answerQuestion(info))
+        dispatch(answerQuestionUser(info))
+        alert('There was an error answering the question. Try again.')
+        dispatch(hideLoading())
+      })
+      .then(() => {
+        dispatch(answerQuestion(info))
+        dispatch(answerQuestionUser(info))
+        dispatch(hideLoading())
+      })
   }
 }
